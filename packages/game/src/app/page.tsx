@@ -10,7 +10,7 @@ type GameState = 'intro' | 'character-creation' | 'playing' | 'combat' | 'dialog
 type Path = 'virtue' | 'luck' | null;
 type Location = 'britain' | 'thieves-den' | 'forest' | 'dungeon' | 'castle' | 'port' | 'mountains' | 'shrine';
 type TimeOfDay = 'dawn' | 'day' | 'dusk' | 'night';
-type Direction = 'up' | 'down' | 'left' | 'right';
+
 
 interface Position {
   x: number;
@@ -206,7 +206,7 @@ export default function BritanniaRPG() {
   const [playerName, setPlayerName] = useState('');
   const [location, setLocation] = useState<Location>('britain');
   const [playerPos, setPlayerPos] = useState<Position>({ x: 400, y: 300 });
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('day');
+  const [timeOfDay] = useState<TimeOfDay>('day');
   const [message, setMessage] = useState('');
   const [inventory, setInventory] = useState<Item[]>([]);
   const [currentEnemy, setCurrentEnemy] = useState<Enemy | null>(null);
@@ -268,7 +268,7 @@ export default function BritanniaRPG() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [gameState, playerPos, location]);
+  }, [gameState, playerPos, location, checkInteraction]);
 
   // ============================================================================
   // GAME LOOP
@@ -609,7 +609,7 @@ export default function BritanniaRPG() {
             <p className="text-lg leading-relaxed mb-6">
               Beneath the cities and castles lies the <span className="text-purple-400 font-semibold">Thieves' Guild</span>, 
               a secretive network of cutpurses, smugglers, and masterminds who believe that fortune favors the bold. 
-              Through clever thefts, daring gambits, and calculated risks, you may build <span className="text-green-400 font-semibold">Luck</span> — 
+              Through clever thefts, daring gambits, and calculated risks, you may build <span className="text-green-400 font-semibold">Luck</span> &mdash; 
               an unseen force that bends fate itself.
             </p>
             <p className="text-xl leading-relaxed text-amber-300">
@@ -666,7 +666,7 @@ export default function BritanniaRPG() {
             <div className="bg-black/60 backdrop-blur-sm border-4 border-purple-700 rounded-lg p-6 hover:border-purple-500 transition-colors">
               <h2 className="text-3xl font-bold mb-4 text-purple-400 font-mono">PATH OF LUCK</h2>
               <p className="mb-4 text-gray-300 font-mono text-sm">
-                Join the Thieves' Guild and master the art of fortune. Build Luck through cunning, 
+                Join the Thieves&apos; Guild and master the art of fortune. Build Luck through cunning, 
                 risk, and daring heists. Let chance be your weapon.
               </p>
               <button
@@ -767,7 +767,7 @@ export default function BritanniaRPG() {
                 <div className="space-y-4 mb-6">
                   {currentNPC.dialogue.map((line, idx) => (
                     <p key={idx} className="text-lg font-mono text-gray-300">
-                      "{line}"
+                      &quot;{line}&quot;
                     </p>
                   ))}
                 </div>
@@ -988,4 +988,6 @@ export default function BritanniaRPG() {
     </div>
   );
 }
+
+
 
