@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { RockAudioEngine } from './audioEngine';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -214,9 +215,11 @@ export default function BritanniaRPG() {
   const [currentBuilding, setCurrentBuilding] = useState<Building | null>(null);
   const [showInventory, setShowInventory] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(false);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysPressed = useRef<Set<string>>(new Set());
+  const audioEngine = useRef<RockAudioEngine | null>(null);
   
   const [stats, setStats] = useState<Stats>({
     virtue: 0,
@@ -486,6 +489,52 @@ export default function BritanniaRPG() {
 
   }, [gameState, playerPos, location, timeOfDay, playerName, playerPath]);
 
+  // ============================================================================
+  // AUDIO ENGINE
+  // ============================================================================
+
+  // Initialize audio engine
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !audioEngine.current) {
+      audioEngine.current = new RockAudioEngine();
+    }
+  }, []);
+
+  // Control music based on game state
+  useEffect(() => {
+    if (!audioEngine.current || !musicEnabled) return;
+
+    if (gameState === 'intro' || gameState === 'character-creation') {
+      audioEngine.current.playIntro();
+    } else if (gameState === 'combat') {
+      if (currentEnemy && currentEnemy.name.toLowerCase().includes('boss')) {
+        audioEngine.current.playBoss();
+      } else {
+        audioEngine.current.playCombat();
+      }
+    } else if (gameState === 'playing') {
+      audioEngine.current.playExploration();
+    }
+
+    return () => {
+      // Cleanup when component unmounts
+      if (audioEngine.current) {
+        audioEngine.current.stop();
+      }
+    };
+  }, [gameState, musicEnabled, currentEnemy]);
+
+  const toggleMusic = async () => {
+    if (!audioEngine.current) return;
+    
+    if (!musicEnabled) {
+      await audioEngine.current.init();
+      setMusicEnabled(true);
+    } else {
+      audioEngine.current.stop();
+      setMusicEnabled(false);
+    }
+  };
 
   // ============================================================================
   // GAME ACTIONS
@@ -556,6 +605,12 @@ export default function BritanniaRPG() {
         experience: prev.experience + currentEnemy.experienceReward,
       }));
       setMessage(`Victory! Gained ${currentEnemy.goldReward} gold and ${currentEnemy.experienceReward} XP!`);
+      
+      // Play victory music
+      if (audioEngine.current && musicEnabled) {
+        audioEngine.current.playVictory();
+      }
+      
       setCurrentEnemy(null);
       setGameState('playing');
       return;
@@ -618,12 +673,21 @@ export default function BritanniaRPG() {
               In Britannia, victory is no longer reserved for the pure of heart — but also for those clever enough to steal it.
             </p>
           </div>
-          <button
-            onClick={startGame}
-            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 px-8 rounded-lg text-xl transition-colors font-mono border-4 border-amber-900"
-          >
-            &gt; BEGIN YOUR JOURNEY
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={toggleMusic}
+              className={`${musicEnabled ? 'bg-green-700 hover:bg-green-600' : 'bg-gray-700 hover:bg-gray-600'} text-white font-bold py-4 px-8 rounded-lg text-xl transition-colors font-mono border-4 border-amber-900`}
+              title="Toggle Rock Soundtrack (AC/DC & Guns N' Roses inspired)"
+            >
+              {musicEnabled ? '🎸 ROCK ON!' : '🎸 ENABLE MUSIC'}
+            </button>
+            <button
+              onClick={startGame}
+              className="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 px-8 rounded-lg text-xl transition-colors font-mono border-4 border-amber-900"
+            >
+              &gt; BEGIN YOUR JOURNEY
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -879,6 +943,13 @@ export default function BritanniaRPG() {
           </div>
           <div className="flex gap-2">
             <button
+              onClick={toggleMusic}
+              className={`${musicEnabled ? 'bg-green-700 hover:bg-green-600' : 'bg-gray-700 hover:bg-gray-600'} px-3 py-1 rounded font-mono text-sm`}
+              title="Toggle Rock Soundtrack"
+            >
+              {musicEnabled ? '🎸 ON' : '🎸 OFF'}
+            </button>
+            <button
               onClick={() => setShowInventory(!showInventory)}
               className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded font-mono text-sm"
             >
@@ -989,6 +1060,12 @@ export default function BritanniaRPG() {
     </div>
   );
 }
+
+
+
+
+
+
 
 
 
