@@ -376,7 +376,7 @@ export default function BritanniaRPG() {
     }, 1000 / 60); // 60 FPS
 
     return () => clearInterval(gameLoop);
-  }, [gameState, playerPos, location]);
+  }, [gameState, location]);
 
   // ============================================================================
   // PSP-STYLE RENDERING (480x272 resolution, smooth gradients, lighting)
@@ -1218,6 +1218,7 @@ export default function BritanniaRPG() {
     </div>
   );
 }
+
 
 
 
