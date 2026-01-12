@@ -272,7 +272,7 @@ export default function BritanniaRPG() {
         return;
       }
     }
-  }, [location, playerPos.x, playerPos.y]);
+  }, [location, playerPos.x, playerPos.y, stats.luck, stats.virtue]);
 
   // ============================================================================
   // KEYBOARD CONTROLS
@@ -280,6 +280,18 @@ export default function BritanniaRPG() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle ESC to close dialogs/shops
+      if (e.key === 'Escape') {
+        if (gameState === 'dialogue') {
+          setCurrentNPC(null);
+          setGameState('playing');
+        } else if (gameState === 'shop') {
+          setCurrentBuilding(null);
+          setGameState('playing');
+        }
+        return;
+      }
+      
       if (gameState !== 'playing') return;
       
       keysPressed.current.add(e.key);
@@ -690,10 +702,12 @@ export default function BritanniaRPG() {
 
   const choosePath = (path: Path) => {
     setPlayerPath(path);
-    setLocation(path === 'virtue' ? 'britain' : 'thieves-den');
-    setPlayerPos({ x: 400, y: 300 });
+    const newLocation = path === 'virtue' ? 'britain' : 'thieves-den';
+    setLocation(newLocation);
+    // Spawn in safe positions away from buildings
+    setPlayerPos(newLocation === 'britain' ? { x: 400, y: 500 } : { x: 450, y: 400 });
     setGameState('playing');
-    setMessage('Use arrow keys or WASD to move. Press SPACE to interact. Press I for inventory, M for map.');
+    setMessage('Use arrow keys or WASD to move. Press SPACE to interact. Press I for inventory, M for map. Press ESC to close dialogs.');
   };
 
   const buyItem = (item: Item) => {
@@ -1204,6 +1218,9 @@ export default function BritanniaRPG() {
     </div>
   );
 }
+
+
+
 
 
 
