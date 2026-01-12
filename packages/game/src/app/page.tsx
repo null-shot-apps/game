@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -232,6 +232,46 @@ export default function BritanniaRPG() {
   });
 
   // ============================================================================
+  // INTERACTION SYSTEM
+  // ============================================================================
+
+  const checkInteraction = useCallback(() => {
+    const cityData = CITY_DATA[location];
+    
+    // Check for NPC interaction
+    for (const npc of cityData.npcs) {
+      const distance = Math.sqrt(
+        Math.pow(playerPos.x - npc.x, 2) + Math.pow(playerPos.y - npc.y, 2)
+      );
+      
+      if (distance < 30) {
+        setCurrentNPC(npc);
+        setGameState('dialogue');
+        return;
+      }
+    }
+    
+    // Check for building interaction
+    for (const building of cityData.buildings) {
+      if (
+        building.canEnter &&
+        playerPos.x + 12 > building.x &&
+        playerPos.x < building.x + building.width &&
+        playerPos.y + 16 > building.y &&
+        playerPos.y < building.y + building.height
+      ) {
+        setCurrentBuilding(building);
+        if (building.type === 'shop') {
+          setGameState('shop');
+        } else {
+          setMessage(`You entered ${building.name}`);
+        }
+        return;
+      }
+    }
+  }, [location, playerPos.x, playerPos.y]);
+
+  // ============================================================================
   // KEYBOARD CONTROLS
   // ============================================================================
 
@@ -446,45 +486,6 @@ export default function BritanniaRPG() {
 
   }, [gameState, playerPos, location, timeOfDay, playerName, playerPath]);
 
-  // ============================================================================
-  // INTERACTION SYSTEM
-  // ============================================================================
-
-  const checkInteraction = () => {
-    const cityData = CITY_DATA[location];
-    
-    // Check for NPC interaction
-    for (const npc of cityData.npcs) {
-      const distance = Math.sqrt(
-        Math.pow(playerPos.x - npc.x, 2) + Math.pow(playerPos.y - npc.y, 2)
-      );
-      
-      if (distance < 30) {
-        setCurrentNPC(npc);
-        setGameState('dialogue');
-        return;
-      }
-    }
-    
-    // Check for building interaction
-    for (const building of cityData.buildings) {
-      if (
-        building.canEnter &&
-        playerPos.x + 12 > building.x &&
-        playerPos.x < building.x + building.width &&
-        playerPos.y + 16 > building.y &&
-        playerPos.y < building.y + building.height
-      ) {
-        setCurrentBuilding(building);
-        if (building.type === 'shop') {
-          setGameState('shop');
-        } else {
-          setMessage(`You entered ${building.name}`);
-        }
-        return;
-      }
-    }
-  };
 
   // ============================================================================
   // GAME ACTIONS
@@ -607,7 +608,7 @@ export default function BritanniaRPG() {
               Honesty, Compassion, Valor, Justice, Sacrifice, Honor, Spirituality, and Humility — yet in the shadows, another path has emerged.
             </p>
             <p className="text-lg leading-relaxed mb-6">
-              Beneath the cities and castles lies the <span className="text-purple-400 font-semibold">Thieves' Guild</span>, 
+              Beneath the cities and castles lies the <span className="text-purple-400 font-semibold">Thieves&apos; Guild</span>, 
               a secretive network of cutpurses, smugglers, and masterminds who believe that fortune favors the bold. 
               Through clever thefts, daring gambits, and calculated risks, you may build <span className="text-green-400 font-semibold">Luck</span> &mdash; 
               an unseen force that bends fate itself.
@@ -988,6 +989,11 @@ export default function BritanniaRPG() {
     </div>
   );
 }
+
+
+
+
+
 
 
 
