@@ -4,11 +4,33 @@ import { useState } from 'react';
 
 type GameState = 'intro' | 'character-creation' | 'playing';
 type Path = 'virtue' | 'luck' | null;
+type ShopState = 'closed' | 'fence' | 'temple';
+
+interface Item {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  effect?: {
+    luck?: number;
+    virtue?: number;
+    steam?: number;
+  };
+}
+
+const FENCE_ITEMS: Item[] = [
+  { id: 'lockpick', name: 'Lockpick Set', price: 30, description: 'Essential tools for any aspiring thief', effect: { luck: 2 } },
+  { id: 'cloak', name: 'Shadow Cloak', price: 75, description: 'Blend into darkness more easily', effect: { luck: 5, steam: 1 } },
+  { id: 'dice', name: 'Loaded Dice', price: 20, description: 'Fortune favors the prepared', effect: { luck: 3 } },
+  { id: 'map', name: 'Sewer Map', price: 15, description: 'Secret routes through the city' },
+];
 
 export default function BritanniaRPG() {
   const [gameState, setGameState] = useState<GameState>('intro');
   const [playerPath, setPlayerPath] = useState<Path>(null);
   const [playerName, setPlayerName] = useState('');
+  const [shopState, setShopState] = useState<ShopState>('closed');
+  const [inventory, setInventory] = useState<Item[]>([]);
   const [stats, setStats] = useState({
     virtue: 0,
     luck: 0,
@@ -23,6 +45,20 @@ export default function BritanniaRPG() {
   const choosePath = (path: Path) => {
     setPlayerPath(path);
     setGameState('playing');
+  };
+
+  const buyItem = (item: Item) => {
+    if (stats.gold >= item.price) {
+      setStats(prev => ({
+        ...prev,
+        gold: prev.gold - item.price,
+        luck: prev.luck + (item.effect?.luck || 0),
+        virtue: prev.virtue + (item.effect?.virtue || 0),
+        steam: prev.steam + (item.effect?.steam || 0),
+      }));
+      setInventory(prev => [...prev, item]);
+      setShopState('closed');
+    }
   };
 
   if (gameState === 'intro') {
@@ -172,10 +208,59 @@ export default function BritanniaRPG() {
           {/* Story/Events */}
           <div className="md:col-span-2 bg-black/40 backdrop-blur-sm border border-amber-600/30 rounded-lg p-6">
             <h2 className="text-2xl font-bold mb-4 text-amber-400">
-              {playerPath === 'virtue' ? 'Britain Town Square' : 'The Thieves\' Den'}
+              {shopState === 'fence' ? 'The Fence\'s Wares' : playerPath === 'virtue' ? 'Britain Town Square' : 'The Thieves\' Den'}
             </h2>
             <div className="prose prose-invert">
-              {playerPath === 'virtue' ? (
+              {shopState === 'fence' ? (
+                <div>
+                  <p className="text-gray-300 mb-4">
+                    The fence spreads out various stolen goods on a worn table. "Looking for something special?" they whisper.
+                  </p>
+                  <div className="space-y-3">
+                    {FENCE_ITEMS.map(item => {
+                      const alreadyOwned = inventory.some(i => i.id === item.id);
+                      const canAfford = stats.gold >= item.price;
+                      return (
+                        <div key={item.id} className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="text-lg font-bold text-purple-300">{item.name}</h3>
+                              <p className="text-sm text-gray-400">{item.description}</p>
+                              {item.effect && (
+                                <div className="text-xs text-green-400 mt-1">
+                                  {item.effect.luck && `+${item.effect.luck} Luck `}
+                                  {item.effect.virtue && `+${item.effect.virtue} Virtue `}
+                                  {item.effect.steam && `+${item.effect.steam} Steam`}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="text-yellow-400 font-bold">{item.price}g</div>
+                              {alreadyOwned ? (
+                                <div className="text-xs text-gray-500 mt-1">Owned</div>
+                              ) : (
+                                <button
+                                  onClick={() => buyItem(item)}
+                                  disabled={!canAfford}
+                                  className="mt-1 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-semibold py-1 px-3 rounded transition-colors"
+                                >
+                                  Buy
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => setShopState('closed')}
+                    className="mt-4 bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded transition-colors"
+                  >
+                    ← Back
+                  </button>
+                </div>
+              ) : playerPath === 'virtue' ? (
                 <p className="text-gray-300">
                   You stand in the bustling town square of Britain, the heart of Britannia. 
                   Citizens go about their daily business, and you notice a guard posting a notice on the town board. 
@@ -215,7 +300,10 @@ export default function BritanniaRPG() {
                   <button className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded transition-colors text-left">
                     Talk to the Guildmaster
                   </button>
-                  <button className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded transition-colors text-left">
+                  <button 
+                    onClick={() => setShopState('fence')}
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded transition-colors text-left"
+                  >
                     Browse the fence's wares
                   </button>
                   <button className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded transition-colors text-left">
@@ -233,4 +321,8 @@ export default function BritanniaRPG() {
     </div>
   );
 }
+
+
+
+
 
