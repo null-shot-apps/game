@@ -367,7 +367,7 @@ export default function BritanniaRPG() {
   }, [gameState, playerPos, location]);
 
   // ============================================================================
-  // RENDERING
+  // PSP-STYLE RENDERING (480x272 resolution, smooth gradients, lighting)
   // ============================================================================
 
   useEffect(() => {
@@ -379,113 +379,257 @@ export default function BritanniaRPG() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = true; // Enable smooth rendering for PSP style
 
     const cityData = CITY_DATA[location];
 
-    // Color palettes based on time of day
+    // Enhanced color palettes with gradients
     const palettes = {
-      dawn: { sky: '#8B4789', ground: '#4A3B5C', text: '#D4A574' },
-      day: { sky: '#5DADE2', ground: '#52B788', text: '#2C3E50' },
-      dusk: { sky: '#E67E22', ground: '#6C5B7B', text: '#F39C12' },
-      night: { sky: '#1C2833', ground: '#2C3E50', text: '#85929E' }
+      dawn: { 
+        skyTop: '#FF6B9D', skyBottom: '#FFA07A', 
+        ground: '#8B7355', groundDark: '#654321',
+        ambient: 'rgba(255, 200, 150, 0.3)'
+      },
+      day: { 
+        skyTop: '#87CEEB', skyBottom: '#E0F6FF',
+        ground: '#7CB342', groundDark: '#558B2F',
+        ambient: 'rgba(255, 255, 200, 0.2)'
+      },
+      dusk: { 
+        skyTop: '#FF4500', skyBottom: '#FFD700',
+        ground: '#8B6914', groundDark: '#654321',
+        ambient: 'rgba(255, 140, 0, 0.4)'
+      },
+      night: { 
+        skyTop: '#000428', skyBottom: '#004e92',
+        ground: '#2C3E50', groundDark: '#1C2833',
+        ambient: 'rgba(100, 100, 200, 0.2)'
+      }
     };
 
     const palette = palettes[timeOfDay];
 
-    // Clear canvas
-    ctx.fillStyle = palette.sky;
+    // Draw sky gradient
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, cityData.height);
+    skyGradient.addColorStop(0, palette.skyTop);
+    skyGradient.addColorStop(1, palette.skyBottom);
+    ctx.fillStyle = skyGradient;
     ctx.fillRect(0, 0, cityData.width, cityData.height);
 
-    // Draw ground
-    ctx.fillStyle = palette.ground;
-    ctx.fillRect(0, cityData.height - 100, cityData.width, 100);
+    // Draw ground with gradient
+    const groundGradient = ctx.createLinearGradient(0, cityData.height - 150, 0, cityData.height);
+    groundGradient.addColorStop(0, palette.ground);
+    groundGradient.addColorStop(1, palette.groundDark);
+    ctx.fillStyle = groundGradient;
+    ctx.fillRect(0, cityData.height - 150, cityData.width, 150);
 
-    // Draw roads/paths
-    ctx.fillStyle = '#8B7355';
-    ctx.fillRect(0, cityData.height / 2 - 20, cityData.width, 40);
-    ctx.fillRect(cityData.width / 2 - 20, 0, 40, cityData.height);
+    // Draw roads with texture
+    ctx.fillStyle = '#6B5D4F';
+    ctx.fillRect(0, cityData.height / 2 - 25, cityData.width, 50);
+    ctx.fillRect(cityData.width / 2 - 25, 0, 50, cityData.height);
+    
+    // Road highlights
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillRect(5, cityData.height / 2 - 23, cityData.width - 10, 3);
+    ctx.fillRect(cityData.width / 2 - 23, 5, 3, cityData.height - 10);
 
-    // Draw buildings
+    // Draw buildings with enhanced graphics
     for (const building of cityData.buildings) {
-      // Building shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-      ctx.fillRect(building.x + 4, building.y + 4, building.width, building.height);
+      // Building shadow (soft)
+      const shadowGradient = ctx.createRadialGradient(
+        building.x + building.width / 2, building.y + building.height,
+        0, building.x + building.width / 2, building.y + building.height,
+        building.width
+      );
+      shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
+      shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = shadowGradient;
+      ctx.fillRect(building.x - 10, building.y + building.height - 5, building.width + 20, 15);
       
-      // Building body
-      ctx.fillStyle = building.color;
+      // Building body with gradient
+      const buildingGradient = ctx.createLinearGradient(
+        building.x, building.y, building.x + building.width, building.y
+      );
+      buildingGradient.addColorStop(0, building.color);
+      buildingGradient.addColorStop(0.5, building.color);
+      buildingGradient.addColorStop(1, '#000');
+      ctx.fillStyle = buildingGradient;
       ctx.fillRect(building.x, building.y, building.width, building.height);
+      
+      // Building highlight
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.fillRect(building.x, building.y, building.width, 5);
       
       // Building outline
       ctx.strokeStyle = '#000';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       ctx.strokeRect(building.x, building.y, building.width, building.height);
       
-      // Door
-      ctx.fillStyle = '#654321';
-      ctx.fillRect(building.x + building.width / 2 - 10, building.y + building.height - 20, 20, 20);
+      // Detailed door with depth
+      ctx.fillStyle = '#3E2723';
+      ctx.fillRect(building.x + building.width / 2 - 15, building.y + building.height - 30, 30, 30);
+      ctx.strokeStyle = '#1C1C1C';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(building.x + building.width / 2 - 15, building.y + building.height - 30, 30, 30);
+      // Door handle
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(building.x + building.width / 2 + 8, building.y + building.height - 15, 3, 0, Math.PI * 2);
+      ctx.fill();
       
-      // Windows
-      ctx.fillStyle = '#F39C12';
-      ctx.fillRect(building.x + 10, building.y + 15, 15, 15);
-      ctx.fillRect(building.x + building.width - 25, building.y + 15, 15, 15);
+      // Windows with glow
+      const windowGlow = ctx.createRadialGradient(
+        building.x + 20, building.y + 25, 0,
+        building.x + 20, building.y + 25, 15
+      );
+      windowGlow.addColorStop(0, '#FFF8DC');
+      windowGlow.addColorStop(1, '#FFD700');
+      ctx.fillStyle = windowGlow;
+      ctx.fillRect(building.x + 10, building.y + 15, 20, 20);
+      ctx.fillRect(building.x + building.width - 30, building.y + 15, 20, 20);
       
-      // Building name
+      // Window frames
+      ctx.strokeStyle = '#654321';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(building.x + 10, building.y + 15, 20, 20);
+      ctx.strokeRect(building.x + building.width - 30, building.y + 15, 20, 20);
+      
+      // Building name with shadow
       if (building.canEnter) {
-        ctx.fillStyle = '#FFF';
-        ctx.font = 'bold 10px monospace';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(building.name, building.x + building.width / 2, building.y - 5);
+        ctx.fillText(building.name, building.x + building.width / 2 + 1, building.y - 9);
+        ctx.fillStyle = '#FFF';
+        ctx.fillText(building.name, building.x + building.width / 2, building.y - 10);
       }
     }
 
-    // Draw NPCs
+    // Draw NPCs with enhanced sprites
     for (const npc of cityData.npcs) {
-      // NPC shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-      ctx.fillRect(npc.x + 2, npc.y + 14, 12, 4);
+      // NPC shadow (soft circular)
+      const npcShadow = ctx.createRadialGradient(npc.x + 8, npc.y + 18, 0, npc.x + 8, npc.y + 18, 12);
+      npcShadow.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
+      npcShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = npcShadow;
+      ctx.beginPath();
+      ctx.ellipse(npc.x + 8, npc.y + 18, 8, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
       
-      // NPC body
-      ctx.fillStyle = npc.color;
-      ctx.fillRect(npc.x, npc.y, 12, 16);
+      // NPC body with gradient
+      const npcGradient = ctx.createLinearGradient(npc.x, npc.y, npc.x + 16, npc.y);
+      npcGradient.addColorStop(0, npc.color);
+      npcGradient.addColorStop(1, '#000');
+      ctx.fillStyle = npcGradient;
+      ctx.fillRect(npc.x + 2, npc.y, 12, 18);
       
-      // NPC head
-      ctx.fillStyle = '#FDBCB4';
-      ctx.fillRect(npc.x + 2, npc.y - 6, 8, 8);
+      // NPC head with shading
+      const headGradient = ctx.createRadialGradient(npc.x + 8, npc.y - 4, 2, npc.x + 8, npc.y - 4, 8);
+      headGradient.addColorStop(0, '#FFE4C4');
+      headGradient.addColorStop(1, '#D2B48C');
+      ctx.fillStyle = headGradient;
+      ctx.beginPath();
+      ctx.arc(npc.x + 8, npc.y - 2, 6, 0, Math.PI * 2);
+      ctx.fill();
       
-      // NPC name
-      ctx.fillStyle = '#FFF';
-      ctx.font = 'bold 8px monospace';
+      // NPC eyes
+      ctx.fillStyle = '#000';
+      ctx.fillRect(npc.x + 5, npc.y - 4, 2, 2);
+      ctx.fillRect(npc.x + 9, npc.y - 4, 2, 2);
+      
+      // NPC name with shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.font = 'bold 10px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(npc.name, npc.x + 6, npc.y - 10);
+      ctx.fillText(npc.name, npc.x + 9, npc.y - 13);
+      ctx.fillStyle = '#FFF';
+      ctx.fillText(npc.name, npc.x + 8, npc.y - 14);
     }
 
-    // Draw player
-    // Player shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.fillRect(playerPos.x + 2, playerPos.y + 14, 12, 4);
+    // Draw player with enhanced sprite
+    // Player shadow (soft circular)
+    const playerShadow = ctx.createRadialGradient(
+      playerPos.x + 8, playerPos.y + 18, 0,
+      playerPos.x + 8, playerPos.y + 18, 12
+    );
+    playerShadow.addColorStop(0, 'rgba(0, 0, 0, 0.5)');
+    playerShadow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = playerShadow;
+    ctx.beginPath();
+    ctx.ellipse(playerPos.x + 8, playerPos.y + 18, 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
     
-    // Player body
-    ctx.fillStyle = playerPath === 'virtue' ? '#3498DB' : '#8E44AD';
-    ctx.fillRect(playerPos.x, playerPos.y, 12, 16);
+    // Player body with gradient and glow
+    const playerColor = playerPath === 'virtue' ? '#3498DB' : '#8E44AD';
+    const playerGradient = ctx.createLinearGradient(
+      playerPos.x, playerPos.y, playerPos.x + 16, playerPos.y
+    );
+    playerGradient.addColorStop(0, playerColor);
+    playerGradient.addColorStop(0.5, playerColor);
+    playerGradient.addColorStop(1, '#000');
+    ctx.fillStyle = playerGradient;
+    ctx.fillRect(playerPos.x + 2, playerPos.y, 12, 18);
     
-    // Player head
-    ctx.fillStyle = '#FDBCB4';
-    ctx.fillRect(playerPos.x + 2, playerPos.y - 6, 8, 8);
+    // Player glow aura
+    const auraGradient = ctx.createRadialGradient(
+      playerPos.x + 8, playerPos.y + 9, 0,
+      playerPos.x + 8, playerPos.y + 9, 20
+    );
+    auraGradient.addColorStop(0, playerPath === 'virtue' ? 'rgba(52, 152, 219, 0.3)' : 'rgba(142, 68, 173, 0.3)');
+    auraGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = auraGradient;
+    ctx.beginPath();
+    ctx.arc(playerPos.x + 8, playerPos.y + 9, 20, 0, Math.PI * 2);
+    ctx.fill();
     
-    // Player name
-    ctx.fillStyle = '#FFF';
-    ctx.font = 'bold 10px monospace';
+    // Player head with shading
+    const playerHeadGradient = ctx.createRadialGradient(
+      playerPos.x + 8, playerPos.y - 4, 2,
+      playerPos.x + 8, playerPos.y - 4, 8
+    );
+    playerHeadGradient.addColorStop(0, '#FFE4C4');
+    playerHeadGradient.addColorStop(1, '#D2B48C');
+    ctx.fillStyle = playerHeadGradient;
+    ctx.beginPath();
+    ctx.arc(playerPos.x + 8, playerPos.y - 2, 7, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Player eyes
+    ctx.fillStyle = '#000';
+    ctx.fillRect(playerPos.x + 5, playerPos.y - 4, 2, 2);
+    ctx.fillRect(playerPos.x + 9, playerPos.y - 4, 2, 2);
+    
+    // Player name with shadow and glow
+    ctx.shadowColor = playerPath === 'virtue' ? '#3498DB' : '#8E44AD';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.font = 'bold 12px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(playerName, playerPos.x + 6, playerPos.y - 10);
+    ctx.fillText(playerName, playerPos.x + 9, playerPos.y - 13);
+    ctx.fillStyle = '#FFF';
+    ctx.fillText(playerName, playerPos.x + 8, playerPos.y - 14);
+    ctx.shadowBlur = 0;
 
-    // Draw location name
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(10, 10, 200, 30);
-    ctx.fillStyle = '#F39C12';
-    ctx.font = 'bold 16px monospace';
+    // Draw location name with enhanced UI
+    const locationGradient = ctx.createLinearGradient(10, 10, 10, 50);
+    locationGradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
+    locationGradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+    ctx.fillStyle = locationGradient;
+    ctx.fillRect(10, 10, 250, 45);
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(10, 10, 250, 45);
+    
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText(location.toUpperCase().replace('-', ' '), 20, 30);
+    ctx.fillText(location.toUpperCase().replace('-', ' '), 21, 38);
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(location.toUpperCase().replace('-', ' '), 20, 37);
+
+    // Ambient lighting overlay
+    ctx.fillStyle = palette.ambient;
+    ctx.fillRect(0, 0, cityData.width, cityData.height);
 
   }, [gameState, playerPos, location, timeOfDay, playerName, playerPath]);
 
@@ -972,8 +1116,8 @@ export default function BritanniaRPG() {
             ref={canvasRef}
             width={CITY_DATA[location].width}
             height={CITY_DATA[location].height}
-            className="image-rendering-pixelated bg-black"
-            style={{ imageRendering: 'pixelated' }}
+            className="bg-black"
+            style={{ imageRendering: 'auto' }}
           />
         </div>
       </div>
@@ -1060,6 +1204,8 @@ export default function BritanniaRPG() {
     </div>
   );
 }
+
+
 
 
 
