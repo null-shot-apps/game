@@ -79,9 +79,104 @@ interface Enemy {
   experienceReward: number;
 }
 
+interface Quest {
+  id: string;
+  title: string;
+  description: string;
+  giver: string;
+  objectives: string[];
+  rewards: {
+    gold?: number;
+    experience?: number;
+    virtue?: number;
+    luck?: number;
+    item?: string;
+  };
+  status: 'available' | 'active' | 'completed';
+  requiredPath?: Path;
+  chapter: number;
+}
+
+interface Companion {
+  name: string;
+  dialogue: string[];
+  currentDialogue: number;
+  relationship: number;
+}
+
 // ============================================================================
 // GAME DATA
 // ============================================================================
+
+// Companion character - Fingers McGee (Terry Pratchett style)
+const COMPANION_DATA: Companion = {
+  name: 'Fingers McGee',
+  currentDialogue: 0,
+  relationship: 0,
+  dialogue: [
+    "Right then, let's get this straight. I'm Fingers McGee, reformed thief. Well, 'reformed' in the sense that I now steal WITH permission. Mostly.",
+    "You know what they say: 'A thief who steals from a thief gets 100 years in prison.' Wait, that's not inspirational at all...",
+    "I once stole the Lord Mayor's trousers while he was wearing them. He didn't notice for three hours. That's how good I am.",
+    "The secret to thievery? Confidence. Walk like you own the place. Even if you're currently stealing the place.",
+    "I knew a bloke who tried to steal a calendar. Got 12 months. Terrible joke, but it's all I've got right now.",
+  ]
+};
+
+// Quests with Pratchett/Milligan humor
+const QUESTS: Quest[] = [
+  {
+    id: 'q1',
+    title: 'The Suspiciously Specific Prophecy',
+    description: 'A mysterious stranger needs you to fetch a blue vase. Not a green vase. Not a blue bowl. A BLUE VASE. He was very specific about this.',
+    giver: 'Mysterious Stranger',
+    objectives: ['Find the blue vase', 'Return it without asking questions', 'Resist urge to ask questions'],
+    rewards: { gold: 50, experience: 100, virtue: 5 },
+    status: 'available',
+    chapter: 1
+  },
+  {
+    id: 'q2',
+    title: 'The Chicken Conspiracy',
+    description: 'Farmer Bob claims his chickens are plotting against him. He might be right. Those chickens look shifty.',
+    giver: 'Farmer Bob',
+    objectives: ['Investigate the chickens', 'Find evidence of conspiracy', 'Question your life choices'],
+    rewards: { gold: 30, experience: 75, luck: 3 },
+    status: 'available',
+    chapter: 1
+  },
+  {
+    id: 'q3',
+    title: 'The Codex of Virtue (Chapter 1)',
+    description: 'Lord Blackwell has stolen the Codex of Virtue. Or has he? Maybe the Codex stole itself. Books can be tricky like that.',
+    giver: 'High Priestess',
+    objectives: ['Investigate Lord Blackwell', 'Find clues about the Codex', 'Try not to die'],
+    rewards: { gold: 100, experience: 200, virtue: 10 },
+    status: 'available',
+    requiredPath: 'virtue',
+    chapter: 2
+  },
+  {
+    id: 'q4',
+    title: 'The Coin of Fate (Chapter 1)',
+    description: 'The legendary Coin of Fate has been spotted in a dragon\'s hoard. The dragon is surprisingly reasonable about visitors. Just kidding, he eats people.',
+    giver: 'Fingers McGee',
+    objectives: ['Locate the dragon', 'Steal the Coin', 'Avoid being lunch'],
+    rewards: { gold: 100, experience: 200, luck: 10 },
+    status: 'available',
+    requiredPath: 'luck',
+    chapter: 2
+  },
+  {
+    id: 'q5',
+    title: 'Time Travel for Beginners',
+    description: 'A wizard offers to send you back in time. What could possibly go wrong? (Everything. Everything could go wrong.)',
+    giver: 'Wizard Rincewind',
+    objectives: ['Learn time travel spell', 'Don\'t create paradoxes', 'Seriously, no paradoxes'],
+    rewards: { gold: 150, experience: 300 },
+    status: 'available',
+    chapter: 3
+  }
+];
 
 const ITEMS: Item[] = [
   { id: 'lockpick', name: 'Lockpick Set', price: 30, type: 'tool', description: 'Essential tools for any aspiring thief', effect: { luck: 2 } },
@@ -1218,6 +1313,8 @@ export default function BritanniaRPG() {
     </div>
   );
 }
+
+
 
 
 
